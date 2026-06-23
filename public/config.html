@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Display Config</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      padding: 20px;
+    }
+
+    h1 { margin-top: 0; }
+
+    .box {
+      background: #222;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 12px;
+      margin-bottom: 4px;
+      opacity: 0.85;
+    }
+
+    input, select, textarea, button {
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 18px;
+      padding: 12px;
+      margin: 6px 0;
+      border-radius: 8px;
+      border: none;
+    }
+
+    textarea {
+      min-height: 120px;
+      font-family: inherit;
+    }
+
+    input[type="checkbox"] {
+      width: auto;
+      transform: scale(1.3);
+      margin-right: 8px;
+    }
+
+    button {
+      background: #444;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover { background: #666; }
+
+    .notice {
+      background: #332900;
+      border: 1px solid #776000;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 12px;
+      color: #ffd86a;
+    }
+
+    .ok {
+      background: #153315;
+      border: 1px solid #367a36;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 12px;
+      color: #9dff9d;
+      display: none;
+    }
+
+    a { color: #ccc; }
+  </style>
+</head>
+
+<body>
+  <h1>Display Config</h1>
+
+  <p>
+    <a href="/index.html" target="_blank">Display öffnen</a>
+    |
+    <a href="/control.html" target="_blank">Control öffnen</a>
+    |
+    <a href="/alert.html" target="_blank">Alert öffnen</a>
+    |
+    <a href="/ready.html" target="_blank">Ready öffnen</a>
+  </p>
+
+  <div class="box">
+    <h2>Server</h2>
+
+    <label for="httpPort">HTTP-Port</label>
+    <input id="httpPort" type="number" value="3000" />
+
+    <label for="oscPort">OSC-Port</label>
+    <input id="oscPort" type="number" value="53000" />
+  </div>
+
+  <div class="box">
+    <h2>MIDI</h2>
+
+    <label>
+      <input id="midiEnabled" type="checkbox" />
+      MIDI aktivieren
+    </label>
+
+    <label for="midiInput">MIDI Input</label>
+    <select id="midiInput"></select>
+
+    <label for="midiReconnectIntervalMs">MIDI Auto-Reconnect in ms</label>
+    <input id="midiReconnectIntervalMs" type="number" value="10000" />
+
+    <button onclick="loadMidiInputs()">MIDI-Geräte neu laden</button>
+  </div>
+
+  <div class="box">
+    <h2>MTC</h2>
+
+    <label>
+      <input id="mtcVisibleOnStartup" type="checkbox" />
+      MTC beim Start sichtbar
+    </label>
+
+    <label>
+      <input id="mtcShowFrames" type="checkbox" />
+      Frames anzeigen
+    </label>
+
+    <label for="mtcLabel">Label</label>
+    <input id="mtcLabel" value="MTC" />
+  </div>
+
+  <div class="box">
+    <h2>Ready</h2>
+
+    <label for="readyTitle">Ready-Titel</label>
+    <input id="readyTitle" value="BÜHNE BEREIT?" />
+
+    <label for="readyMessage">Ready-Text</label>
+    <textarea id="readyMessage">Bitte bestätigen, wenn alle Positionen bereit sind.</textarea>
+
+    <label for="readyQlabHost">QLab Host / IP</label>
+    <input id="readyQlabHost" value="127.0.0.1" />
+
+    <label for="readyQlabPort">QLab OSC-Port</label>
+    <input id="readyQlabPort" type="number" value="53000" />
+
+    <label for="readyOscAddress">OSC-Adresse an QLab</label>
+    <input id="readyOscAddress" value="/cue/READY/start" />
+  </div>
+
+  <div class="box">
+    <h2>Alert</h2>
+
+    <label for="alertTitle">Standard-Titel</label>
+    <input id="alertTitle" value="STAGE ALERT" />
+
+    <label for="alertPresets">Presets, eine Meldung pro Zeile</label>
+    <textarea id="alertPresets"></textarea>
+  </div>
+
+  <div class="box">
+    <h2>Status-Timeouts</h2>
+
+    <label for="oscTimeoutMs">OSC Timeout in ms</label>
+    <input id="oscTimeoutMs" type="number" value="5000" />
+
+    <label for="mtcTimeoutMs">MTC Timeout in ms</label>
+    <input id="mtcTimeoutMs" type="number" value="1500" />
+  </div>
+
+  <div class="box">
+    <button onclick="saveConfig()">Konfiguration speichern</button>
+
+    <div class="notice">
+      MIDI-Gerät und MIDI-Aktivierung werden sofort neu verbunden. HTTP- und OSC-Port benötigen weiterhin einen Neustart.
+    </div>
+
+    <div id="saved" class="ok">
+      Konfiguration gespeichert.
+    </div>
+  </div>
+
+  <script>
+    let currentConfig = null;
+
+    async function getJson(url) {
+      const res = await fetch(url);
+      return res.json();
+    }
+
+    async function postJson(url, data) {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      return res.json();
+    }
+
+    async function loadConfig() {
+      currentConfig = await getJson("/api/config");
+
+      document.getElementById("httpPort").value = currentConfig.httpPort ?? 3000;
+      document.getElementById("oscPort").value = currentConfig.oscPort ?? 53000;
+
+      document.getElementById("midiEnabled").checked = Boolean(currentConfig.midi?.enabled);
+      document.getElementById("midiReconnectIntervalMs").value = currentConfig.midi?.reconnectIntervalMs ?? 10000;
+
+      document.getElementById("mtcVisibleOnStartup").checked = Boolean(currentConfig.mtc?.visibleOnStartup);
+      document.getElementById("mtcShowFrames").checked = Boolean(currentConfig.mtc?.showFrames);
+      document.getElementById("mtcLabel").value = currentConfig.mtc?.label ?? "MTC";
+
+      document.getElementById("readyTitle").value = currentConfig.ready?.title ?? "BÜHNE BEREIT?";
+      document.getElementById("readyMessage").value = currentConfig.ready?.message ?? "Bitte bestätigen, wenn alle Positionen bereit sind.";
+      document.getElementById("readyQlabHost").value = currentConfig.ready?.qlabHost ?? "127.0.0.1";
+      document.getElementById("readyQlabPort").value = currentConfig.ready?.qlabPort ?? 53000;
+      document.getElementById("readyOscAddress").value = currentConfig.ready?.oscAddress ?? "/cue/READY/start";
+
+      document.getElementById("alertTitle").value = currentConfig.alert?.title ?? "STAGE ALERT";
+      document.getElementById("alertPresets").value = (currentConfig.alert?.presets || []).join("\n");
+
+      document.getElementById("oscTimeoutMs").value = currentConfig.status?.oscTimeoutMs ?? 5000;
+      document.getElementById("mtcTimeoutMs").value = currentConfig.status?.mtcTimeoutMs ?? 1500;
+
+      await loadMidiInputs();
+    }
+
+    async function loadMidiInputs() {
+      const select = document.getElementById("midiInput");
+      const selected = currentConfig?.midi?.inputName || select.value || "";
+
+      select.innerHTML = "";
+
+      const emptyOption = document.createElement("option");
+      emptyOption.value = "";
+      emptyOption.textContent = "Kein MIDI Input ausgewählt";
+      select.appendChild(emptyOption);
+
+      const data = await getJson("/api/midi/inputs");
+
+      for (const input of data.inputs || []) {
+        const opt = document.createElement("option");
+        opt.value = input;
+        opt.textContent = input;
+        select.appendChild(opt);
+      }
+
+      select.value = selected;
+    }
+
+    async function saveConfig() {
+      const presets = document.getElementById("alertPresets").value
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      const nextConfig = {
+        httpPort: Number(document.getElementById("httpPort").value),
+        oscPort: Number(document.getElementById("oscPort").value),
+        midi: {
+          enabled: document.getElementById("midiEnabled").checked,
+          inputName: document.getElementById("midiInput").value,
+          reconnectIntervalMs: Number(document.getElementById("midiReconnectIntervalMs").value)
+        },
+        mtc: {
+          visibleOnStartup: document.getElementById("mtcVisibleOnStartup").checked,
+          showFrames: document.getElementById("mtcShowFrames").checked,
+          label: document.getElementById("mtcLabel").value || "MTC"
+        },
+        alert: {
+          title: document.getElementById("alertTitle").value || "STAGE ALERT",
+          presets
+        },
+        ready: {
+          title: document.getElementById("readyTitle").value || "BÜHNE BEREIT?",
+          message: document.getElementById("readyMessage").value || "Bitte bestätigen, wenn alle Positionen bereit sind.",
+          qlabHost: document.getElementById("readyQlabHost").value || "127.0.0.1",
+          qlabPort: Number(document.getElementById("readyQlabPort").value) || 53000,
+          oscAddress: document.getElementById("readyOscAddress").value || "/cue/READY/start"
+        },
+        status: {
+          oscTimeoutMs: Number(document.getElementById("oscTimeoutMs").value),
+          mtcTimeoutMs: Number(document.getElementById("mtcTimeoutMs").value)
+        }
+      };
+
+      const result = await postJson("/api/config", nextConfig);
+      currentConfig = result.config;
+
+      const saved = document.getElementById("saved");
+      saved.style.display = "block";
+      setTimeout(() => { saved.style.display = "none"; }, 3000);
+    }
+
+    loadConfig();
+  </script>
+</body>
+</html>

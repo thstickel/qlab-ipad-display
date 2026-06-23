@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Display Control</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      padding: 20px;
+    }
+
+    h1 { margin-top: 0; }
+
+    .box {
+      background: #222;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    input, select, button {
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 18px;
+      padding: 12px;
+      margin: 6px 0;
+      border-radius: 8px;
+      border: none;
+    }
+
+    button {
+      background: #444;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover { background: #666; }
+
+    .danger { background: #900; }
+    .danger:hover { background: #c00; }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    a { color: #ccc; }
+  </style>
+</head>
+
+<body>
+  <h1>Display Control</h1>
+
+  <p>
+    <a href="/index.html" target="_blank">Display öffnen</a>
+    |
+    <a href="/config.html" target="_blank">Config öffnen</a>
+    |
+    <a href="/alert.html" target="_blank">Alert öffnen</a>
+    |
+    <a href="/ready.html" target="_blank">Ready öffnen</a>
+  </p>
+
+  <div class="box">
+    <h2>Text anzeigen</h2>
+    <input id="textLine1" placeholder="Zeile 1" value="Willkommen" />
+    <select id="textColor1">
+      <option>white</option>
+      <option>yellow</option>
+      <option>red</option>
+      <option>green</option>
+      <option>blue</option>
+    </select>
+
+    <input id="textLine2" placeholder="Zeile 2" value="Show beginnt gleich" />
+    <select id="textColor2">
+      <option>white</option>
+      <option>yellow</option>
+      <option>red</option>
+      <option>green</option>
+      <option>blue</option>
+    </select>
+
+    <button onclick="sendText()">Text senden</button>
+  </div>
+
+  <div class="box">
+    <h2>Countdown</h2>
+    <input id="countdownLine1" placeholder="Text" value="Vorhang auf" />
+    <select id="countdownColor1">
+      <option>yellow</option>
+      <option>white</option>
+      <option>red</option>
+      <option>green</option>
+      <option>blue</option>
+    </select>
+
+    <input id="countdownSeconds" type="number" placeholder="Sekunden" value="60" />
+    <select id="countdownColor2">
+      <option>white</option>
+      <option>yellow</option>
+      <option>red</option>
+      <option>green</option>
+      <option>blue</option>
+    </select>
+
+    <button onclick="sendCountdown()">Countdown starten</button>
+  </div>
+
+  <div class="box">
+    <h2>Count-Up</h2>
+    <input id="countupLine1" placeholder="Text" value="Pause läuft" />
+    <select id="countupColor1">
+      <option>yellow</option>
+      <option>white</option>
+      <option>red</option>
+      <option>green</option>
+      <option>blue</option>
+    </select>
+
+    <select id="countupColor2">
+      <option>white</option>
+      <option>yellow</option>
+      <option>red</option>
+      <option>green</option>
+      <option>blue</option>
+    </select>
+
+    <button onclick="sendCountup()">Count-Up starten</button>
+  </div>
+
+  <div class="box">
+    <h2>MTC Anzeige</h2>
+
+    <div class="row">
+      <button onclick="mtcOn()">MTC EIN</button>
+      <button onclick="mtcOff()">MTC AUS</button>
+    </div>
+  </div>
+
+  <div class="box">
+    <button class="danger" onclick="clearDisplay()">Anzeige löschen</button>
+  </div>
+
+  <script>
+    async function post(url, data = {}) {
+      await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+    }
+
+    function sendText() {
+      post("/api/text", {
+        line1: document.getElementById("textLine1").value,
+        color1: document.getElementById("textColor1").value,
+        line2: document.getElementById("textLine2").value,
+        color2: document.getElementById("textColor2").value
+      });
+    }
+
+    function sendCountdown() {
+      post("/api/countdown", {
+        line1: document.getElementById("countdownLine1").value,
+        color1: document.getElementById("countdownColor1").value,
+        seconds: document.getElementById("countdownSeconds").value,
+        color2: document.getElementById("countdownColor2").value
+      });
+    }
+
+    function sendCountup() {
+      post("/api/countup", {
+        line1: document.getElementById("countupLine1").value,
+        color1: document.getElementById("countupColor1").value,
+        color2: document.getElementById("countupColor2").value
+      });
+    }
+
+    function mtcOn() {
+      post("/api/mtc/on");
+    }
+
+    function mtcOff() {
+      post("/api/mtc/off");
+    }
+
+    function clearDisplay() {
+      post("/api/clear");
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>OSC Display</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div id="stage">
+    <div id="panel">
+      <div id="msg1" class="line"></div>
+      <div id="msg2" class="line"></div>
+    </div>
+  </div>
+
+  <div id="alertOverlay">
+    <div id="alertBox">
+      <div id="alertTitle">STAGE ALERT</div>
+      <div id="alertMessage"></div>
+      <div id="alertSince">Alert seit 00:00</div>
+      <button id="alertAckButton" type="button">ERLEDIGT</button>
+    </div>
+  </div>
+
+  <div id="readyOverlay">
+    <div id="readyBox">
+      <div id="readyTitle">BÜHNE BEREIT?</div>
+      <div id="readyMessage"></div>
+      <div id="readySince">Anfrage seit 00:00</div>
+      <button id="readyConfirmButton" type="button">BESTÄTIGEN</button>
+    </div>
+  </div>
+
+  <div id="mtc">MTC 00:00:00</div>
+
+  <div id="status">
+    WS: <span id="wsState">…</span>
+    |
+    OSC: <span id="oscState">waiting</span>
+    |
+    MIDI: <span id="midiState">disconnected</span>
+    |
+    MTC: <span id="mtcState">stopped</span>
+    |
+    ALERT: <span id="alertState">off</span>
+    |
+    READY: <span id="readyState">off</span>
+    |
+    <a href="/control.html" target="_blank">Control</a>
+    |
+    <a href="/config.html" target="_blank">Config</a>
+    |
+    <a href="/alert.html" target="_blank">Alert</a>
+    |
+    <a href="/ready.html" target="_blank">Ready</a>
+  </div>
+
+  <div id="hint">ESC: Clear</div>
+
+  <script src="app.js"></script>
+</body>
+</html>

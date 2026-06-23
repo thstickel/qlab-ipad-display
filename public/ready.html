@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Ready Anfrage</title>
+
+  <style>
+    :root {
+      --bg: #101010;
+      --panel: #1f1f1f;
+      --green: #006b2f;
+      --green2: #008f3d;
+      --fg: #fff;
+      --muted: #bbb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    }
+
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 8vw, 48px);
+      line-height: 1;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: clamp(14px, 4vw, 18px);
+      margin-bottom: 18px;
+    }
+
+    .box {
+      background: var(--panel);
+      padding: clamp(14px, 4vw, 22px);
+      border-radius: 18px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      margin: 0 0 6px;
+      font-size: 15px;
+    }
+
+    input,
+    textarea,
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 18px;
+      font-family: inherit;
+    }
+
+    input,
+    textarea {
+      background: #2b2b2b;
+      color: white;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    textarea {
+      min-height: 115px;
+      resize: vertical;
+      line-height: 1.3;
+    }
+
+    button {
+      background: #444;
+      color: white;
+      font-weight: 850;
+      cursor: pointer;
+      min-height: 56px;
+      margin-top: 10px;
+    }
+
+    button:active {
+      transform: scale(0.99);
+    }
+
+    .send {
+      background: var(--green);
+      font-size: clamp(20px, 6vw, 30px);
+      min-height: 76px;
+      letter-spacing: 0.02em;
+    }
+
+    .send:hover {
+      background: var(--green2);
+    }
+
+    .cancel {
+      background: #555;
+      min-height: 66px;
+    }
+
+    .status {
+      padding: 12px;
+      border-radius: 12px;
+      background: #222;
+      color: var(--muted);
+      margin-top: 10px;
+      min-height: 46px;
+    }
+
+    .active {
+      background: #003f1d;
+      color: white;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .links {
+      margin: 12px 0 18px;
+      color: var(--muted);
+    }
+
+    .links a {
+      color: #ddd;
+      text-decoration: none;
+      margin-right: 10px;
+    }
+
+    .links a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>Ready Anfrage</h1>
+    <div class="sub">Fragt Backstage ab, ob alle für den Showstart oder Neustart bereit sind.</div>
+
+    <div class="links">
+      <a href="/index.html" target="_blank">Display</a>
+      <a href="/control.html" target="_blank">Control</a>
+      <a href="/config.html" target="_blank">Config</a>
+      <a href="/alert.html" target="_blank">Alert</a>
+    </div>
+
+    <div class="box">
+      <label for="title">Titel</label>
+      <input id="title" value="BÜHNE BEREIT?" />
+
+      <label for="message">Text auf dem Backstage-Monitor</label>
+      <textarea id="message">Bitte bestätigen, wenn alle Positionen bereit sind.</textarea>
+
+      <button class="send" onclick="requestReady()">READY ANFRAGEN</button>
+
+      <div id="sendStatus" class="status">Bereit.</div>
+    </div>
+
+    <div class="box">
+      <button class="cancel" onclick="cancelReady()">READY ANFRAGE ABBRECHEN</button>
+      <div id="currentStatus" class="status">Status wird geladen…</div>
+    </div>
+  </div>
+
+  <script>
+    async function getJson(url) {
+      const res = await fetch(url);
+      return res.json();
+    }
+
+    async function postJson(url, data = {}) {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+
+      return res.json();
+    }
+
+    async function loadReady() {
+      const data = await getJson("/api/ready");
+
+      document.getElementById("title").value = data.title || "BÜHNE BEREIT?";
+      document.getElementById("message").value = data.message || "Bitte bestätigen, wenn alle Positionen bereit sind.";
+
+      updateCurrentStatus(data);
+    }
+
+    function updateCurrentStatus(data) {
+      const el = document.getElementById("currentStatus");
+
+      if (data.active) {
+        el.classList.add("active");
+        el.textContent = "AKTIV: Ready-Anfrage wartet auf Bestätigung.";
+      } else if (data.confirmedAt) {
+        el.classList.remove("active");
+        el.textContent = "Zuletzt bestätigt.";
+      } else {
+        el.classList.remove("active");
+        el.textContent = "Keine Ready-Anfrage aktiv.";
+      }
+    }
+
+    async function requestReady() {
+      const title = document.getElementById("title").value || "BÜHNE BEREIT?";
+      const message = document.getElementById("message").value.trim() || "Bitte bestätigen, wenn alle Positionen bereit sind.";
+
+      // const confirmed = confirm("Ready-Anfrage an Backstage senden?");
+      // if (!confirmed) return;
+
+      const result = await postJson("/api/ready/request", { title, message });
+
+      const status = document.getElementById("sendStatus");
+      if (result.ok) {
+        status.textContent = "Ready-Anfrage wurde gesendet.";
+        status.classList.add("active");
+      } else {
+        status.textContent = result.message || "Ready-Anfrage konnte nicht gesendet werden.";
+        status.classList.remove("active");
+      }
+
+      await loadReady();
+    }
+
+    async function cancelReady() {
+      // const confirmed = confirm("Ready-Anfrage wirklich abbrechen?");
+      // if (!confirmed) return;
+
+      await postJson("/api/ready/cancel");
+      document.getElementById("sendStatus").textContent = "Ready-Anfrage wurde abgebrochen.";
+      document.getElementById("sendStatus").classList.remove("active");
+      await loadReady();
+    }
+
+    loadReady();
+    setInterval(loadReady, 3000);
+  </script>
+</body>
+</html>

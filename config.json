@@ -1,0 +1,36 @@
+{
+  "httpPort": 3000,
+  "oscPort": 53000,
+  "midi": {
+    "enabled": true,
+    "inputName": "IAC-Treiber Bus 1",
+    "reconnectIntervalMs": 10000
+  },
+  "mtc": {
+    "visibleOnStartup": false,
+    "showFrames": false,
+    "label": "Zeit"
+  },
+  "status": {
+    "oscTimeoutMs": 5000,
+    "mtcTimeoutMs": 1500
+  },
+  "alert": {
+    "title": "STAGE ALERT",
+    "presets": [
+      "Ausfall Mikrofon 1",
+      "Batterie tauschen InEar 4",
+      "Funkstrecke prüfen",
+      "Umbau verzögert sich",
+      "Darsteller bitte zur Bühne",
+      "Technik bitte melden"
+    ]
+  },
+  "ready": {
+    "title": "BÜHNE BEREIT?",
+    "message": "Bitte bestätigen, wenn alle Positionen bereit sind.",
+    "qlabHost": "127.0.0.1",
+    "qlabPort": 53001,
+    "oscAddress": "/cue/READY/start"
+  }
+}

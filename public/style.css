@@ -1,0 +1,275 @@
+:root {
+  --bg: #000;
+  --fg: #fff;
+  --alert-bg: #8b0000;
+  --alert-fg: #fff;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+}
+
+/* Zentrierter Inhalt */
+#stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 4vh 4vw;
+}
+
+#panel {
+  width: min(1200px, 92vw);
+  text-align: center;
+  line-height: 1.05;
+  user-select: none;
+}
+
+.line {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 350ms ease, transform 350ms ease;
+  will-change: opacity, transform;
+  margin: 0.25em 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.line.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#msg1 {
+  font-size: clamp(28px, 7vw, 110px);
+}
+
+#msg2 {
+  font-size: clamp(22px, 5.5vw, 90px);
+  font-weight: 700;
+}
+
+/* Alert Vollbildmodus */
+#alertOverlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  background: var(--alert-bg);
+  color: var(--alert-fg);
+  z-index: 1000;
+  padding: 5vh 5vw;
+}
+
+body.alert-active #alertOverlay {
+  display: grid;
+}
+
+
+#alertBox {
+  width: min(1400px, 94vw);
+  text-align: center;
+  user-select: none;
+}
+
+#alertTitle {
+  font-size: clamp(38px, 9vw, 150px);
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 0.95;
+  margin-bottom: clamp(24px, 5vh, 70px);
+}
+
+#alertMessage {
+  font-size: clamp(30px, 7vw, 120px);
+  font-weight: 850;
+  line-height: 1.08;
+  white-space: pre-wrap;
+  word-break: break-word;
+  text-transform: uppercase;
+}
+
+/* MTC Anzeige unten mittig */
+#mtc {
+  position: fixed;
+  bottom: 8vh;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: clamp(18px, 2.5vw, 36px);
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.08em;
+  display: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Status unten links */
+#status {
+  position: fixed;
+  left: 12px;
+  bottom: 10px;
+  font-size: 12px;
+  opacity: 0.65;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
+  user-select: none;
+  z-index: 1200;
+}
+
+body.alert-active #status {
+  opacity: 0.35;
+}
+
+#status a {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+}
+
+#status a:hover {
+  text-decoration: underline;
+}
+
+.state-ok {
+  color: #7CFF7C;
+}
+
+.state-warn {
+  color: #FFD36A;
+}
+
+.state-bad {
+  color: #FF7C7C;
+}
+
+.state-alert {
+  color: #fff;
+  font-weight: 900;
+}
+
+/* Kleine Hilfe rechts unten */
+#hint {
+  position: fixed;
+  right: 12px;
+  bottom: 10px;
+  font-size: 12px;
+  opacity: 0.45;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+
+#alertSince {
+  margin-top: clamp(22px, 5vh, 60px);
+  font-size: clamp(16px, 3vw, 34px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+
+#alertAckButton {
+  margin-top: clamp(18px, 4vh, 44px);
+  font-size: clamp(22px, 4vw, 48px);
+  font-weight: 950;
+  letter-spacing: 0.05em;
+  color: #8b0000;
+  background: white;
+  border: none;
+  border-radius: 18px;
+  padding: clamp(14px, 3vh, 28px) clamp(28px, 7vw, 90px);
+  cursor: pointer;
+  box-shadow: 0 10px 35px rgba(0,0,0,0.35);
+  position: relative;
+  z-index: 1300;
+}
+
+#alertAckButton:active {
+  transform: scale(0.98);
+}
+
+
+/* Ready Vollbild-Overlay.
+   Es verdeckt die Anzeige vollständig, aber der Inhalt darunter läuft weiter. */
+#readyOverlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  background: #006b2f;
+  color: #fff;
+  z-index: 900;
+  padding: 5vh 5vw;
+}
+
+body.ready-active #readyOverlay {
+  display: grid;
+}
+
+#readyBox {
+  width: min(1400px, 94vw);
+  text-align: center;
+  user-select: none;
+}
+
+#readyTitle {
+  font-size: clamp(38px, 9vw, 150px);
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 0.95;
+  margin-bottom: clamp(24px, 5vh, 70px);
+}
+
+#readyMessage {
+  font-size: clamp(28px, 5.8vw, 96px);
+  font-weight: 850;
+  line-height: 1.08;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+#readySince {
+  margin-top: clamp(22px, 5vh, 60px);
+  font-size: clamp(16px, 3vw, 34px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+
+#readyConfirmButton {
+  margin-top: clamp(18px, 4vh, 44px);
+  font-size: clamp(22px, 4vw, 48px);
+  font-weight: 950;
+  letter-spacing: 0.05em;
+  color: #006b2f;
+  background: white;
+  border: none;
+  border-radius: 18px;
+  padding: clamp(14px, 3vh, 28px) clamp(28px, 7vw, 90px);
+  cursor: pointer;
+  box-shadow: 0 10px 35px rgba(0,0,0,0.35);
+  position: relative;
+  z-index: 1300;
+}
+
+#readyConfirmButton:active {
+  transform: scale(0.98);
+}

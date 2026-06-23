@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Stage Alert</title>
+
+  <style>
+    :root {
+      --bg: #101010;
+      --panel: #1f1f1f;
+      --red: #8b0000;
+      --red2: #b00000;
+      --fg: #fff;
+      --muted: #bbb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    }
+
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 8vw, 48px);
+      line-height: 1;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: clamp(14px, 4vw, 18px);
+      margin-bottom: 18px;
+    }
+
+    .box {
+      background: var(--panel);
+      padding: clamp(14px, 4vw, 22px);
+      border-radius: 18px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      margin: 0 0 6px;
+      font-size: 15px;
+    }
+
+    input,
+    textarea,
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 18px;
+      font-family: inherit;
+    }
+
+    input,
+    textarea {
+      background: #2b2b2b;
+      color: white;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    textarea {
+      min-height: 130px;
+      resize: vertical;
+      line-height: 1.3;
+    }
+
+    button {
+      background: #444;
+      color: white;
+      font-weight: 850;
+      cursor: pointer;
+      min-height: 56px;
+      margin-top: 10px;
+    }
+
+    button:active {
+      transform: scale(0.99);
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .preset {
+      text-align: left;
+      background: #333;
+      margin: 0;
+    }
+
+    .send {
+      background: var(--red);
+      font-size: clamp(20px, 6vw, 30px);
+      min-height: 76px;
+      letter-spacing: 0.02em;
+    }
+
+    .send:hover {
+      background: var(--red2);
+    }
+
+    .clear {
+      background: #555;
+      min-height: 66px;
+    }
+
+    .status {
+      padding: 12px;
+      border-radius: 12px;
+      background: #222;
+      color: var(--muted);
+      margin-top: 10px;
+      min-height: 46px;
+    }
+
+    .active {
+      background: #3a0000;
+      color: white;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .links {
+      margin: 12px 0 18px;
+      color: var(--muted);
+    }
+
+    .links a {
+      color: #ddd;
+      text-decoration: none;
+      margin-right: 10px;
+    }
+
+    .links a:hover {
+      text-decoration: underline;
+    }
+
+    @media (min-width: 700px) {
+      .preset-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>Stage Alert</h1>
+    <div class="sub">Sendet eine priorisierte Crew-Meldung auf alle Displays.</div>
+
+    <div class="links">
+      <a href="/index.html" target="_blank">Display</a>
+      <a href="/control.html" target="_blank">Control</a>
+      <a href="/config.html" target="_blank">Config</a>
+    </div>
+
+    <div class="box">
+      <label for="title">Titel</label>
+      <input id="title" value="STAGE ALERT" />
+
+      <label for="message">Meldung</label>
+      <textarea id="message" placeholder="z.B. Batterie tauschen InEar 4"></textarea>
+
+      <button class="send" onclick="sendAlert()">ALERT SENDEN</button>
+
+      <div id="sendStatus" class="status">Bereit.</div>
+    </div>
+
+    <div class="box">
+      <h2>Presets</h2>
+      <div id="presets" class="preset-grid"></div>
+    </div>
+
+    <div class="box">
+      <button class="clear" onclick="clearAlert()">ALERT AUFHEBEN</button>
+      <div id="currentStatus" class="status">Status wird geladen…</div>
+    </div>
+  </div>
+
+  <script>
+    async function getJson(url) {
+      const res = await fetch(url);
+      return res.json();
+    }
+
+    async function postJson(url, data = {}) {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+
+      return res.json();
+    }
+
+    function setMessage(text) {
+      document.getElementById("message").value = text;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    async function loadAlert() {
+      const data = await getJson("/api/alert");
+
+      const presets = document.getElementById("presets");
+      presets.innerHTML = "";
+
+      for (const preset of data.presets || []) {
+        const btn = document.createElement("button");
+        btn.className = "preset";
+        btn.textContent = preset;
+        btn.onclick = () => setMessage(preset);
+        presets.appendChild(btn);
+      }
+
+      document.getElementById("title").value = data.title || "STAGE ALERT";
+      updateCurrentStatus(data);
+    }
+
+    function updateCurrentStatus(data) {
+      const el = document.getElementById("currentStatus");
+
+      if (data.active) {
+        el.classList.add("active");
+        el.textContent = "AKTIV: " + (data.message || "");
+      } else {
+        el.classList.remove("active");
+        el.textContent = "Kein Alert aktiv.";
+      }
+    }
+
+    async function sendAlert() {
+      const title = document.getElementById("title").value || "STAGE ALERT";
+      const message = document.getElementById("message").value.trim();
+
+      if (!message) {
+        alert("Bitte eine Meldung eingeben oder ein Preset wählen.");
+        return;
+      }
+
+      // const confirmed = confirm("Alert wirklich auf allen Displays anzeigen?");
+      // if (!confirmed) return;
+
+      const result = await postJson("/api/alert/on", { title, message });
+
+      const status = document.getElementById("sendStatus");
+      if (result.ok) {
+        status.textContent = "Alert wurde gesendet.";
+        status.classList.add("active");
+      } else {
+        status.textContent = result.message || "Alert konnte nicht gesendet werden.";
+        status.classList.remove("active");
+      }
+
+      await loadAlert();
+    }
+
+    async function clearAlert() {
+      // const confirmed = confirm("Alert wirklich aufheben?");
+      // if (!confirmed) return;
+
+      await postJson("/api/alert/off");
+      document.getElementById("sendStatus").textContent = "Alert wurde aufgehoben.";
+      document.getElementById("sendStatus").classList.remove("active");
+      await loadAlert();
+    }
+
+    loadAlert();
+    setInterval(loadAlert, 3000);
+  </script>
+</body>
+</html>
