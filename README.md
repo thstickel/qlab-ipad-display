@@ -461,7 +461,7 @@ Cue Name: Backstage bereit
 
 ## Voraussetzungen
 
-Node.js 20 oder neuer
+Node.js 24 oder neuer
 
 Prüfen:
 
@@ -476,10 +476,6 @@ npm -v
 
 ```bash
 npm install
-npm install osc
-npm install ws
-npm install express
-npm install easymidi
 ```
 
 ---
@@ -535,7 +531,7 @@ Diesen MIDI Input anschließend in der config.html auswählen.
 # Server starten
 
 ```bash
-node server.js
+npm start
 ```
 
 Typische Ausgabe:

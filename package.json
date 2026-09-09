@@ -1,9 +1,14 @@
 {
   "name": "qlab-ipad-display",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "test": "node --check server.js && node --check public/app.js && node --check midi-list.js && node --check mtc-simulator.js && node --check osc-monitor.js"
+  },
+  "engines": {
+    "node": ">=24.0.0",
+    "npm": ">=11.0.0"
   },
   "keywords": [],
   "author": "",
@@ -13,6 +18,9 @@
     "easymidi": "^3.2.0",
     "express": "^5.2.1",
     "osc": "^2.4.5",
-    "ws": "^8.19.0"
+    "ws": "^8.21.3"
+  },
+  "overrides": {
+    "ws": "$ws"
   }
 }

@@ -870,7 +870,7 @@ app.post("/api/config", (req, res) => {
 
   res.json({
     ok: true,
-    restartRequired: false,
+    restartRequired: true,
     config
   });
 });
