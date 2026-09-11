@@ -4,7 +4,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node --check server.js && node --check public/app.js && node --check midi-list.js && node --check mtc-simulator.js && node --check osc-monitor.js"
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "engines": {
     "node": ">=24.0.0",
@@ -22,5 +23,8 @@
   },
   "overrides": {
     "ws": "$ws"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0"
   }
 }

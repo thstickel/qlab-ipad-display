@@ -6,6 +6,13 @@ const http = require("http");
 const WebSocket = require("ws");
 const osc = require("osc");
 const { execFileSync } = require("child_process");
+const {
+  oscArgToString,
+  normalizeMidiName,
+  formatTime,
+  parseAconnectInputs,
+  decodeMtcFromNibbles
+} = require("./lib/core");
 
 // Debug-Schalter
 const DEBUG_WS = false;
@@ -153,15 +160,6 @@ function broadcast(obj) {
   }
 }
 
-function oscArgToString(a) {
-  if (a == null) return "";
-  return String(a.value ?? a);
-}
-
-function normalizeMidiName(name) {
-  return String(name || "").replace(/\s+/g, " ").trim();
-}
-
 function stopCountdown() {
   if (countdownTimer) {
     clearInterval(countdownTimer);
@@ -179,12 +177,6 @@ function stopCountup() {
 function stopAllTimers() {
   stopCountdown();
   stopCountup();
-}
-
-function formatTime(totalSeconds) {
-  const min = Math.floor(totalSeconds / 60);
-  const sec = totalSeconds % 60;
-  return `${min}:${String(sec).padStart(2, "0")}`;
 }
 
 function getStatusPayload() {
@@ -518,61 +510,6 @@ function getMidiInputs() {
   }
 }
 
-function parseAconnectInputs(output) {
-  const inputs = [];
-  let currentClientName = "";
-  let currentClientId = "";
-
-  const lines = String(output || "").split(/\r?\n/);
-
-  for (const line of lines) {
-    const clientMatch = line.match(/^client\s+(\d+):\s+'([^']+)'/);
-    if (clientMatch) {
-      currentClientId = clientMatch[1];
-      currentClientName = normalizeMidiName(clientMatch[2]);
-      continue;
-    }
-
-    const portMatch = line.match(/^\s*(\d+)\s+'([^']+)'/);
-    if (portMatch && currentClientName && currentClientId) {
-      const portId = portMatch[1];
-      const portName = normalizeMidiName(portMatch[2]);
-      const clientName = normalizeMidiName(currentClientName);
-
-      inputs.push(normalizeMidiName(`${clientName}:${portName} ${currentClientId}:${portId}`));
-    }
-  }
-
-  return inputs;
-}
-
-function decodeMtcFromNibbles() {
-  const frames = (mtcNibbles[1] << 4) | mtcNibbles[0];
-  const seconds = (mtcNibbles[3] << 4) | mtcNibbles[2];
-  const minutes = (mtcNibbles[5] << 4) | mtcNibbles[4];
-
-  const hoursLow = mtcNibbles[6];
-  const hoursHighAndRate = mtcNibbles[7];
-  const hoursHigh = hoursHighAndRate & 0x01;
-  const hours = (hoursHigh << 4) | hoursLow;
-
-  if (hours > 23 || minutes > 59 || seconds > 59 || frames > 99) {
-    return null;
-  }
-
-  const simple = [
-    String(hours).padStart(2, "0"),
-    String(minutes).padStart(2, "0"),
-    String(seconds).padStart(2, "0")
-  ].join(":");
-
-  if (!config.mtc.showFrames) {
-    return simple;
-  }
-
-  return `${simple}:${String(frames).padStart(2, "0")}`;
-}
-
 function handleMidiMessage(msg) {
   if (DEBUG_MIDI_RAW) {
     console.log("MIDI RAW:", msg);
@@ -594,7 +531,9 @@ function handleMidiMessage(msg) {
 
   mtcNibbles[messageType] = dataNibble;
 
-  const decoded = decodeMtcFromNibbles();
+  const decoded = decodeMtcFromNibbles(mtcNibbles, {
+    showFrames: Boolean(config.mtc.showFrames)
+  });
   if (!decoded) return;
 
   const oldMTC = currentMTC;
